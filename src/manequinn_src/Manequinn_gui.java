@@ -33,6 +33,7 @@ import java.io.Console;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -45,6 +46,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JTabbedPane;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.UIManager;
 import java.awt.Color;
 //import java.awt.Component;
@@ -229,7 +232,21 @@ public class Manequinn_gui implements StringReceiver {
 				txChest.setText("0");
 				txChest.setColumns(10);
 				lblChest.setLabelFor(txChest);
-				
+				txChest.getDocument().addDocumentListener(new DocumentListener(){
+					public void changedUpdate(DocumentEvent e) {
+					    warn();
+					  }
+					  public void removeUpdate(DocumentEvent e) {
+					    warn();
+					  }
+					  public void insertUpdate(DocumentEvent e) {
+					    warn();
+					  }
+
+					  public void warn() {
+					     txBoobs.setText(txChest.getText());
+					  }
+				});
 				
 				JLabel de_chest = new JLabel("");
 				de_chest.addMouseListener(new MouseAdapter() {
@@ -358,27 +375,44 @@ public class Manequinn_gui implements StringReceiver {
 				btnSetSize = new JButton("Set");
 				btnSetSize.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent arg0) {
-						//if (com != null)
-						//{
-							if ((txNeck.getText().equals("0"))  && 
-								(txChest.getText().equals("0")) && 
-								(txBoobs.getText().equals("0")) && 
-							    (txBelly.getText().equals("0")) && 
-							    (txAss.getText().equals("0")) && 
-							    (txAss.getText().equals("0")))
-							{
-								com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, "[]");
-							}
-							else{ 
-								String body_size = "[" + txNeck.getText()  + "]"
-												 + "[" + txChest.getText() + "]"
-												 + "[" + txBoobs.getText() + "]"
-												 + "[" + txBelly.getText() + "]"
-												 + "[" + txAss.getText()   + "]"
-												 + "[" + txHeigh.getText() + "]";
-								com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, body_size);
-							}
-						//}	
+						if (com != null)
+						{
+							String neck, chest, boobs, belly, ass, height;
+							
+							if(Objects.equals("0", txNeck.getText()))
+								neck = "";
+							else
+								neck = txNeck.getText();
+							if(Objects.equals("0", txChest.getText()))
+								chest = "";
+							else
+								chest = txChest.getText();
+							if(Objects.equals("0", txBoobs.getText()))
+								boobs = "";
+							else
+								boobs = txBoobs.getText();
+							if(Objects.equals("0", txBelly.getText()))
+								belly = "";
+							else
+								belly = txBelly.getText();
+							if(Objects.equals("0", txAss.getText()))   
+								ass = "";
+							else
+								ass = txAss.getText();
+							if(Objects.equals("0", txNeck.getText()))
+								height = "";
+							else
+								height = txHeigh.getText();
+							
+							String body_size = "[" + neck  + "]"
+											 + "[" + chest + "]"
+											 + "[" + boobs + "]"
+											 + "[" + belly + "]"
+											 + "[" + ass   + "]"
+											 + "[" + height + "]";
+							com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, body_size);
+							
+						}	
 					}
 				});
 				
@@ -471,7 +505,7 @@ public class Manequinn_gui implements StringReceiver {
 		btnReboot.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (com != null)
-					com.Send_Command_No_Data(Common.COMMAND.CMD_REBOOT);
+					com.Send_Command_One_Byte(Common.COMMAND.CMD_REBOOT, (byte)4);
 			}
 		});
 		GroupLayout gl_BodyGroup = new GroupLayout(BodyGroup);
@@ -512,11 +546,11 @@ public class Manequinn_gui implements StringReceiver {
 					.addGap(44)
 					.addComponent(separator_2, GroupLayout.PREFERRED_SIZE, 4, GroupLayout.PREFERRED_SIZE)
 					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
-						.addComponent(btnGetSize, GroupLayout.PREFERRED_SIZE, 53, GroupLayout.PREFERRED_SIZE)
-						.addComponent(btnSetSize, GroupLayout.PREFERRED_SIZE, 53, GroupLayout.PREFERRED_SIZE)
+					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING, false)
 						.addComponent(cbxReset, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
-						.addComponent(btnReboot)))
+						.addComponent(btnReboot, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addComponent(btnSetSize, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addComponent(btnGetSize, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
 		);
 		gl_BodyGroup.setVerticalGroup(
 			gl_BodyGroup.createParallelGroup(Alignment.LEADING)
@@ -753,18 +787,15 @@ public class Manequinn_gui implements StringReceiver {
 		}
 	}
 	
-	public static void Incr_Text (JFormattedTextField txbox)
-	{
+	public static void Incr_Text (JFormattedTextField txbox){
 		txbox.setText(Integer.toString(Integer.parseInt(txbox.getText()) + 1)); 
 	}
 	
-	public static void Sub_Text (JFormattedTextField txbox)
-	{
+	public static void Sub_Text (JFormattedTextField txbox){
 		txbox.setText(Integer.toString(Integer.parseInt(txbox.getText()) - 1)); 
 	}
 	
-	public static void infoBox(String infoMessage, String titleBar)
-    {
+	public static void infoBox(String infoMessage, String titleBar){
         JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
 

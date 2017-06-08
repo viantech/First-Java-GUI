@@ -36,22 +36,18 @@ public class SocketClient {
 		// Create socket connection
 		try {
 			socket = new Socket();
-			//socket.setSoTimeout(2000);
+			socket.setKeepAlive(true);
 			socket.connect(new InetSocketAddress(this.ipAddr, this.port), 2000);
+			out = socket.getOutputStream();
 		} catch (IOException ec) {
 			JOptionPane.showMessageDialog(null, "Socket Server not exist", "Socket I/O", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
 		
 		//Create Stream I/O
-		try {
-			//out = new PrintWriter(socket.getOutputStream(), true);
-			out = socket.getOutputStream();
-			//in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		} catch (IOException ec) {
-			JOptionPane.showMessageDialog(null, "I/O Stream Socket Error", "Socket I/O", JOptionPane.ERROR_MESSAGE);
-			return false;
-		}
+		//out = new PrintWriter(socket.getOutputStream(), true);
+			
+		//in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		connect_ok = true;
 		//Thread recv from Server
 		runnableHandler = new ReceivedStream(socket);
@@ -79,10 +75,17 @@ public class SocketClient {
 	}
 	
 	class ReceivedStream implements Runnable {
-		private final Socket client;
+		private Socket client;
 		private volatile Thread blinker;
-		ReceivedStream(Socket client){
-			this.client = client;
+		private InputStream inStream;
+		ReceivedStream(Socket _client){
+			try{
+				this.client = _client;
+				this.inStream = this.client.getInputStream();
+			}
+			catch (IOException ioe){
+				JOptionPane.showMessageDialog(null, "Error Get Input Stream", "Socket I/O", JOptionPane.INFORMATION_MESSAGE);
+			}
 		}
 		
 		public void start() {
@@ -104,18 +107,15 @@ public class SocketClient {
 			
 			while (blinker == thisThread){
 				try{
-					if ((red = client.getInputStream().read(buffer)) > 0){
+					if ((red = this.inStream.read(buffer)) > 0){
 						synchronized(this){
 							notifyAll();
 						}
 						redData = new byte[red];
 					    System.arraycopy(buffer, 0, redData, 0, red);
 					    
-					    if ((redData[red - 2] + (redData[red - 3] << 8)) == 1)
-					    {
-					    	//Common.SubFrameFormat sub_fmt = new Common.SubFrameFormat(HEADER.RESP_PACKET_HDR.getValue(), (short)(red - 1), (short)(redData[red - 2] + (redData[red - 3] << 8)));
-					    	if  (Common.Decode_SubFrame(redData) != (byte)0)
-					    	{
+					    if ((redData[red - 2] + (redData[red - 3] << 8)) == 1){
+					    	if  (Common.Decode_SubFrame(redData) != (byte)0){
 					    		byte[] meta_sub_frame = new byte[red - 6];
 					    		System.arraycopy(redData, 3, meta_sub_frame, 0, red - 6);
 					    		Data_Receive_Handler(meta_sub_frame);
@@ -123,9 +123,9 @@ public class SocketClient {
 					    }
 					}
 					else{
-						client.getInputStream().close();
-						client.getOutputStream().close();
-						client.close();
+						this.client.getOutputStream().close();
+						this.inStream.close();
+						this.client.close();
 						ResetConnectTcp();
 						blinker = null;
 						JOptionPane.showMessageDialog(null, "Server has close connection", "Socket I/O", JOptionPane.ERROR_MESSAGE);
@@ -134,8 +134,12 @@ public class SocketClient {
 					}
 						
 				}catch (IOException ioe){
-					//Close();
+					ResetConnectTcp();
+					blinker = null;
 					JOptionPane.showMessageDialog(null, "Close Input Stream", "Socket I/O", JOptionPane.INFORMATION_MESSAGE);
+					if (!socket.isClosed()){
+							pview.passMsg("Close", Common.COMMAND.CMD_DISCONNECT);
+					}
 			        break;
 				}
 			}
@@ -182,7 +186,7 @@ public class SocketClient {
         	{
         		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
         		if (0x01 == info_ack)
-        			pview.passMsg("Set OK", Common.COMMAND.CMD_SET_POSITION);
+        			pview.passMsg("Set done", Common.COMMAND.CMD_SET_POSITION);
         		else
         			pview.passMsg("Not set position", Common.COMMAND.CMD_SET_POSITION);
         	}
@@ -208,7 +212,7 @@ public class SocketClient {
         	{
         		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
         		if (0x01 == info_ack)
-        			pview.passMsg("Disconnected", Common.COMMAND.CMD_DISCONNECT);
+        			pview.passMsg("Reboot", Common.COMMAND.CMD_SET_POSITION);
         		else
         			pview.passMsg("Not Reboot", Common.COMMAND.CMD_SET_POSITION);
         	}
