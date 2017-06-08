@@ -119,14 +119,17 @@ public class SocketClient {
 					    		byte[] meta_sub_frame = new byte[red - 6];
 					    		System.arraycopy(redData, 3, meta_sub_frame, 0, red - 6);
 					    		Data_Receive_Handler(meta_sub_frame);
-					    		
 					    	}
 					    }
 					}
 					else{
 						client.getInputStream().close();
+						client.getOutputStream().close();
 						client.close();
+						ResetConnectTcp();
+						blinker = null;
 						JOptionPane.showMessageDialog(null, "Server has close connection", "Socket I/O", JOptionPane.ERROR_MESSAGE);
+						pview.passMsg("Close", Common.COMMAND.CMD_DISCONNECT);
 						break;
 					}
 						
@@ -154,34 +157,34 @@ public class SocketClient {
         				
         				String msg = "Connection accepted " + socket.getInetAddress() + ":" + socket.getPort() + "\nReady for transmitting data";
         				JOptionPane.showMessageDialog(null, msg, "Socket I/O", JOptionPane.INFORMATION_MESSAGE);
-        				pview.passMsg("Accepted", 1);
+        				pview.passMsg("Accepted", Common.COMMAND.CMD_CONNECTION_REQUEST);
         			}
         		else
-        			pview.passMsg("Not Request Connection", 1);
+        			JOptionPane.showMessageDialog(null, "Failed Request Connection", "Socket I/O", JOptionPane.ERROR_MESSAGE);
         	}
         	else if (command_bytes[0] == Common.COMMAND.CMD_DISCONNECT.getValue())
         	{
         		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
         		if (0x01 == info_ack)
-        			pview.passMsg("Disconnected.", 1);
+        			pview.passMsg("Disconnected", Common.COMMAND.CMD_DISCONNECT);
         		else
-        			pview.passMsg("Not Disconnect", 1);
+        			pview.passMsg("Not Disconnect", Common.COMMAND.CMD_SET_POSITION);
         	}
         	else if (command_bytes[0] == Common.COMMAND.CMD_RESET_POSITION.getValue())
         	{
         		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
         		if (0x01 == info_ack)
-        			pview.passMsg("OK", 1);
+        			pview.passMsg("Reset done", Common.COMMAND.CMD_SET_POSITION);
         		else
-        			pview.passMsg("Not re-set position", 1);
+        			pview.passMsg("Not re-set", Common.COMMAND.CMD_SET_POSITION);
         	}
         	else if (command_bytes[0] == Common.COMMAND.CMD_SET_POSITION.getValue())
         	{
         		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
         		if (0x01 == info_ack)
-        			pview.passMsg("Set OK", 1);
+        			pview.passMsg("Set OK", Common.COMMAND.CMD_SET_POSITION);
         		else
-        			pview.passMsg("Not set position", 1);
+        			pview.passMsg("Not set position", Common.COMMAND.CMD_SET_POSITION);
         	}
         	else if (command_bytes[0] == Common.COMMAND.CMD_GET_POSITION.getValue())
         	{
@@ -192,7 +195,7 @@ public class SocketClient {
         				if (byte_bits.length > 1)
         				{	
         					String recv_str = new String(Arrays.copyOfRange(byte_bits, 1, byte_bits.length - 1));
-        					pview.passMsg(recv_str, 0);
+        					pview.passMsg(recv_str, Common.COMMAND.CMD_GET_POSITION);
         				}
         				else
         					//pview.passMsg("Not get position", 1); 
@@ -200,6 +203,14 @@ public class SocketClient {
         			}
         		else
         			JOptionPane.showMessageDialog(null, "Wrong Command Frame", "Socket I/O", JOptionPane.ERROR_MESSAGE);
+        	}
+        	else if (command_bytes[0] == Common.COMMAND.CMD_REBOOT.getValue())
+        	{
+        		info_ack = Common.Decode_Frame_ACK(command_bytes[0], command_bytes);
+        		if (0x01 == info_ack)
+        			pview.passMsg("Disconnected", Common.COMMAND.CMD_DISCONNECT);
+        		else
+        			pview.passMsg("Not Reboot", Common.COMMAND.CMD_SET_POSITION);
         	}
         }
 	}

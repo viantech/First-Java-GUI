@@ -109,10 +109,10 @@ public class Common {
     	CMD_GET_POSITION(0x04),
     	CMD_RESET_POSITION(0x05),
     	CMD_SET_CONN_TYPE(0x06),
-    	CMD_SET_CONN_PROP(0x07),
-    	CMD_GET_CONN_PROP(0x08),
+    	CMD_GET_CONN_PROP(0x07),
+    	CMD_SET_CONN_PROP(0x08),
     	CMD_GET_STATUS(0x09),
-    	CMD_REBOOT(0x10),
+    	CMD_REBOOT(0x0A),
     	;
     	private int Value;
     	COMMAND(int cmd_byte)

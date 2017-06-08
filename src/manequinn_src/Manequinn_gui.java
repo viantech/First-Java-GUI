@@ -29,16 +29,28 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Console;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import javax.swing.JToggleButton;
+import javax.swing.JRadioButton;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JMenu;
+import javax.swing.JTabbedPane;
+import javax.swing.border.TitledBorder;
+import javax.swing.UIManager;
+import java.awt.Color;
 //import java.awt.Component;
 
 interface StringReceiver {
-	void passMsg(String msg, int set_type);
+	void passMsg(String msg, Common.COMMAND set_type);
 }
 
 public class Manequinn_gui implements StringReceiver {
@@ -57,6 +69,7 @@ public class Manequinn_gui implements StringReceiver {
 	private JLabel txReceive;
 	private JFrame frame;
 	private JTextField txAddress;
+	private JButton btnConnect;
 	//SocketClient tcpClient;
 	private Communication com;
 	private List<JFormattedTextField> list_body_parts;
@@ -90,15 +103,11 @@ public class Manequinn_gui implements StringReceiver {
 		list_body_parts = new ArrayList<JFormattedTextField>();
 		Image img_ico = new ImageIcon(this.getClass().getResource("/Icon_SD.png")).getImage();
 		frame = new JFrame();
-		frame.setBounds(100, 100, 910, 605);
+		frame.setBounds(100, 100, 950, 640);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		frame.setIconImage(img_ico);
 		frame.setTitle("Seldat Robot Manequinn");
-		BodyGroup = new JPanel();
-		BodyGroup.setBounds(25, 109, 290, 396);
-		BodyGroup.setBorder(BorderFactory.createTitledBorder("Body Measurement"));
-		frame.getContentPane().add(BodyGroup);
 		
 		NumberFormat format = NumberFormat.getInstance();
 		format.setGroupingUsed(false);
@@ -112,6 +121,81 @@ public class Manequinn_gui implements StringReceiver {
 	    formatter.setCommitsOnValidEdit(true);
 		Image img_add = new ImageIcon(this.getClass().getResource("/add.gif")).getImage();
 		Image img_sub = new ImageIcon(this.getClass().getResource("/remove_correction.png")).getImage();
+		String type_reset[] = {"Min", "Max"};
+		
+		JLabel lblStatus = new JLabel("Status:");
+		lblStatus.setBounds(10, 560, 46, 14);
+		frame.getContentPane().add(lblStatus);
+		
+		txReceive = new JLabel("Idle");
+		txReceive.setHorizontalAlignment(SwingConstants.LEFT);
+		lblStatus.setLabelFor(txReceive);
+		txReceive.setBounds(66, 560, 235, 14);
+		frame.getContentPane().add(txReceive);
+
+		Image img1 = new ImageIcon(this.getClass().getResource("/body-front.png")).getImage();
+		Image img2 = new ImageIcon(this.getClass().getResource("/body-side.png")).getImage();
+		Image img_cover = new ImageIcon(this.getClass().getResource("/seldat_icon.png")).getImage();
+		
+		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setBounds(0, 0, 934, 550);
+		frame.getContentPane().add(tabbedPane);
+		
+		JPanel panel = new JPanel();
+		tabbedPane.addTab("Main Page", null, panel, null);
+		
+		JPanel ConnectionGroup = new JPanel();
+		ConnectionGroup.setBorder(BorderFactory.createTitledBorder("Connection Properties"));
+		
+		JLabel lblIp = new JLabel("IP:");
+		
+		txAddress = new JTextField();
+		txAddress.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent arg0) {
+				if (!validateIP(txAddress.getText()))
+				{
+					infoBox("Please input the valid IP Address format", "Invalid IP Address");
+					txAddress.requestFocus();
+				}
+			}
+		});
+		lblIp.setLabelFor(txAddress);
+		txAddress.setText("192.168.1.4");
+		txAddress.setColumns(10);
+		
+		btnConnect = new JButton("Connect");
+		btnConnect.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				//tcpClient = new SocketClient (window, txAddress.getText(), 4321);
+				if (btnConnect.getText() == "Connect")
+				{
+					com = new Communication(Common.TYPECONNECT.HDR_WIFI);
+					if (com.Connect(window, txAddress.getText(), Integer.parseInt(txPort.getText())))
+						{
+							com.Send_Command_No_Data(Common.COMMAND.CMD_CONNECTION_REQUEST);
+						}
+					else
+						infoBox("Cannot connect", "Socket Error");
+				}
+				else
+				{
+					com.Send_Command_No_Data(Common.COMMAND.CMD_DISCONNECT);
+				}
+			}
+		});
+		
+		JLabel lblPort = new JLabel("Port:");
+		
+		txPort = new JFormattedTextField(formatter);
+		lblPort.setLabelFor(txPort);
+		txPort.setText("5000");
+		txPort.setColumns(10);
+		
+		JLabel cover = new JLabel("");
+		cover.setIcon(new ImageIcon(img_cover));
+		BodyGroup = new JPanel();
+		BodyGroup.setBorder(BorderFactory.createTitledBorder("Body Measurement"));
 		
 		JLabel lblNeck = new JLabel("Neck");
 		lblNeck.setLabelFor(txNeck);
@@ -138,124 +222,124 @@ public class Manequinn_gui implements StringReceiver {
 				Incr_Text(txNeck);
 			}
 		});
-
-		JLabel lblChest = new JLabel("Chest");
-		txChest = new JFormattedTextField(formatter);
-		txChest.setHorizontalAlignment(SwingConstants.CENTER);
-		txChest.setText("0");
-		txChest.setColumns(10);
-		lblChest.setLabelFor(txChest);
 		
-		
-		JLabel de_chest = new JLabel("");
-		de_chest.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Sub_Text(txChest);
-			}
-		});
-		de_chest.setIcon(new ImageIcon(img_sub));
-		
-		JLabel add_chest = new JLabel("");
-		add_chest.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				Incr_Text(txChest);
-			}
-		});
-		add_chest.setIcon(new ImageIcon(img_add));
-		
-		JLabel lbBust = new JLabel("Bust");
-		lbBust.setLabelFor(txBoobs);
-		txBoobs = new JFormattedTextField(formatter);
-		txBoobs.setHorizontalAlignment(SwingConstants.CENTER);
-		txBoobs.setText("0");
-		txBoobs.setColumns(10);
-		
-		JLabel de_bust = new JLabel("");
-		de_bust.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Sub_Text(txBoobs);
-			}
-		});
-		de_bust.setIcon(new ImageIcon(img_sub));
-		
-		JLabel add_bust = new JLabel("");
-		add_bust.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				Incr_Text(txBoobs);
-			}
-		});
-		add_bust.setIcon(new ImageIcon(img_add));
-		
-		JLabel lbWaist = new JLabel("Waist");
-		lbWaist.setLabelFor(txBelly);
-		txBelly = new JFormattedTextField(formatter);
-		txBelly.setHorizontalAlignment(SwingConstants.CENTER);
-		txBelly.setText("0");
-		txBelly.setColumns(10);
-		
-		JLabel de_waist = new JLabel("");
-		de_waist.addMouseListener(new MouseAdapter() {
-				@Override
-				public void mouseClicked(MouseEvent e) {
-				Sub_Text(txBelly);
-			}
-		});
-		de_waist.setIcon(new ImageIcon(img_sub));
-		
-		JLabel add_waist = new JLabel("");
-		add_waist.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Incr_Text(txBelly);
-			}
-		});
-		add_waist.setIcon(new ImageIcon(img_add));
-		
-		JLabel lblHip = new JLabel("Hips");
-		lblHip.setLabelFor(txAss);
-		txAss = new JFormattedTextField(formatter);
-		txAss.setHorizontalAlignment(SwingConstants.CENTER);
-		txAss.setText("0");
-		txAss.setColumns(10);
-		
-		JLabel de_hip = new JLabel("");
-		de_hip.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Sub_Text(txAss);
-			}
-		});
-		de_hip.setIcon(new ImageIcon(img_sub));
-		
-		JLabel add_hip = new JLabel("");
-		add_hip.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Incr_Text(txAss);
-			}
-		});
-		add_hip.setIcon(new ImageIcon(img_add));
-		
-		JLabel lblHeight = new JLabel("Heigh");
-		lblHeight.setLabelFor(txHeigh);
-		txHeigh = new JFormattedTextField(formatter);
-		txHeigh.setHorizontalAlignment(SwingConstants.CENTER);
-		txHeigh.setText("0");
-		txHeigh.setColumns(10);
-		
-		JLabel de_heigh = new JLabel("");
-		de_heigh.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				Sub_Text(txHeigh);
-			}
-		});
-		de_heigh.setIcon(new ImageIcon(img_sub));
-		
+				JLabel lblChest = new JLabel("Chest");
+				txChest = new JFormattedTextField(formatter);
+				txChest.setHorizontalAlignment(SwingConstants.CENTER);
+				txChest.setText("0");
+				txChest.setColumns(10);
+				lblChest.setLabelFor(txChest);
+				
+				
+				JLabel de_chest = new JLabel("");
+				de_chest.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Sub_Text(txChest);
+					}
+				});
+				de_chest.setIcon(new ImageIcon(img_sub));
+				
+				JLabel add_chest = new JLabel("");
+				add_chest.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent arg0) {
+						Incr_Text(txChest);
+					}
+				});
+				add_chest.setIcon(new ImageIcon(img_add));
+				
+				JLabel lbBust = new JLabel("Bust");
+				lbBust.setLabelFor(txBoobs);
+				txBoobs = new JFormattedTextField(formatter);
+				txBoobs.setHorizontalAlignment(SwingConstants.CENTER);
+				txBoobs.setText("0");
+				txBoobs.setColumns(10);
+				
+				JLabel de_bust = new JLabel("");
+				de_bust.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Sub_Text(txBoobs);
+					}
+				});
+				de_bust.setIcon(new ImageIcon(img_sub));
+				
+				JLabel add_bust = new JLabel("");
+				add_bust.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent arg0) {
+						Incr_Text(txBoobs);
+					}
+				});
+				add_bust.setIcon(new ImageIcon(img_add));
+				
+				JLabel lbWaist = new JLabel("Waist");
+				lbWaist.setLabelFor(txBelly);
+				txBelly = new JFormattedTextField(formatter);
+				txBelly.setHorizontalAlignment(SwingConstants.CENTER);
+				txBelly.setText("0");
+				txBelly.setColumns(10);
+				
+				JLabel de_waist = new JLabel("");
+				de_waist.addMouseListener(new MouseAdapter() {
+						@Override
+						public void mouseClicked(MouseEvent e) {
+						Sub_Text(txBelly);
+					}
+				});
+				de_waist.setIcon(new ImageIcon(img_sub));
+				
+				JLabel add_waist = new JLabel("");
+				add_waist.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Incr_Text(txBelly);
+					}
+				});
+				add_waist.setIcon(new ImageIcon(img_add));
+				
+				JLabel lblHip = new JLabel("Hips");
+				lblHip.setLabelFor(txAss);
+				txAss = new JFormattedTextField(formatter);
+				txAss.setHorizontalAlignment(SwingConstants.CENTER);
+				txAss.setText("0");
+				txAss.setColumns(10);
+				
+				JLabel de_hip = new JLabel("");
+				de_hip.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Sub_Text(txAss);
+					}
+				});
+				de_hip.setIcon(new ImageIcon(img_sub));
+				
+				JLabel add_hip = new JLabel("");
+				add_hip.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Incr_Text(txAss);
+					}
+				});
+				add_hip.setIcon(new ImageIcon(img_add));
+				
+				JLabel lblHeight = new JLabel("Heigh");
+				lblHeight.setLabelFor(txHeigh);
+				txHeigh = new JFormattedTextField(formatter);
+				txHeigh.setHorizontalAlignment(SwingConstants.CENTER);
+				txHeigh.setText("0");
+				txHeigh.setColumns(10);
+				
+				JLabel de_heigh = new JLabel("");
+				de_heigh.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						Sub_Text(txHeigh);
+					}
+				});
+				de_heigh.setIcon(new ImageIcon(img_sub));
+				
 				JLabel add_heigh = new JLabel("");
 				add_heigh.addMouseListener(new MouseAdapter() {
 					@Override
@@ -264,215 +348,252 @@ public class Manequinn_gui implements StringReceiver {
 					}
 				});
 				add_heigh.setIcon(new ImageIcon(img_add));
+				
+				JLabel lblMm = new JLabel("Unit: mm");
+				lblMm.setHorizontalAlignment(SwingConstants.CENTER);
+				
+				JSeparator separator_2 = new JSeparator();
+				separator_2.setOrientation(SwingConstants.VERTICAL);
+				
+				btnSetSize = new JButton("Set");
+				btnSetSize.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						//if (com != null)
+						//{
+							if ((txNeck.getText().equals("0"))  && 
+								(txChest.getText().equals("0")) && 
+								(txBoobs.getText().equals("0")) && 
+							    (txBelly.getText().equals("0")) && 
+							    (txAss.getText().equals("0")) && 
+							    (txAss.getText().equals("0")))
+							{
+								com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, "[]");
+							}
+							else{ 
+								String body_size = "[" + txNeck.getText()  + "]"
+												 + "[" + txChest.getText() + "]"
+												 + "[" + txBoobs.getText() + "]"
+												 + "[" + txBelly.getText() + "]"
+												 + "[" + txAss.getText()   + "]"
+												 + "[" + txHeigh.getText() + "]";
+								com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, body_size);
+							}
+						//}	
+					}
+				});
+				
+				btnGetSize = new JButton("Get");
+				btnGetSize.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						if (com != null)
+							com.Send_Command_No_Data(Common.COMMAND.CMD_GET_POSITION);
+					}
+				});
+				JComboBox cbxReset = new JComboBox(type_reset);
+				cbxReset.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						if (com != null)
+						{
+							if (cbxReset.getSelectedIndex() == 0)
+							{
+								Reset_Component();
+								com.Send_Command_One_Byte(Common.COMMAND.CMD_RESET_POSITION, (byte)0);
+							}
+							else
+								com.Send_Command_One_Byte(Common.COMMAND.CMD_RESET_POSITION, (byte)1);
+						}
+					}
+				});
+				
+				list_body_parts.add(txNeck);
+				list_body_parts.add(txChest);
+				list_body_parts.add(txBoobs);
+				list_body_parts.add(txBelly);
+				list_body_parts.add(txAss);
+				list_body_parts.add(txHeigh);
 		
-		btnSetSize = new JButton("Set");
-		btnSetSize.addActionListener(new ActionListener() {
+		JPanel panel_1 = new JPanel();
+		panel_1.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Simulate", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
+		GroupLayout gl_panel = new GroupLayout(panel);
+		gl_panel.setHorizontalGroup(
+			gl_panel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panel.createParallelGroup(Alignment.TRAILING)
+						.addComponent(BodyGroup, GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+						.addComponent(ConnectionGroup, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+					.addPreferredGap(ComponentPlacement.RELATED, 50, Short.MAX_VALUE)
+					.addGroup(gl_panel.createParallelGroup(Alignment.TRAILING)
+						.addComponent(cover, GroupLayout.PREFERRED_SIZE, 425, GroupLayout.PREFERRED_SIZE)
+						.addComponent(panel_1, GroupLayout.PREFERRED_SIZE, 579, GroupLayout.PREFERRED_SIZE))
+					.addContainerGap())
+		);
+		gl_panel.setVerticalGroup(
+			gl_panel.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel.createSequentialGroup()
+					.addContainerGap()
+					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
+						.addComponent(cover, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
+						.addComponent(ConnectionGroup, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+					.addGap(18)
+					.addGroup(gl_panel.createParallelGroup(Alignment.LEADING)
+						.addComponent(panel_1, GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+						.addComponent(BodyGroup, GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE))
+					.addContainerGap())
+		);
+		
+		JLabel front_img = new JLabel("");
+		front_img.setIcon(new ImageIcon(img1));
+		
+		JLabel side_img = new JLabel("");
+		side_img.setIcon(new ImageIcon(img2));
+		GroupLayout gl_panel_1 = new GroupLayout(panel_1);
+		gl_panel_1.setHorizontalGroup(
+			gl_panel_1.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_panel_1.createSequentialGroup()
+					.addContainerGap()
+					.addComponent(front_img)
+					.addPreferredGap(ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+					.addComponent(side_img, GroupLayout.PREFERRED_SIZE, 230, GroupLayout.PREFERRED_SIZE)
+					.addContainerGap())
+		);
+		gl_panel_1.setVerticalGroup(
+			gl_panel_1.createParallelGroup(Alignment.LEADING)
+				.addGroup(Alignment.TRAILING, gl_panel_1.createSequentialGroup()
+					.addGroup(gl_panel_1.createParallelGroup(Alignment.TRAILING)
+						.addComponent(side_img, Alignment.LEADING, GroupLayout.PREFERRED_SIZE, 368, Short.MAX_VALUE)
+						.addComponent(front_img, GroupLayout.PREFERRED_SIZE, 368, Short.MAX_VALUE))
+					.addContainerGap())
+		);
+		panel_1.setLayout(gl_panel_1);
+		
+		JButton btnReboot = new JButton("Reboot");
+		btnReboot.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (com != null)
-				{
-					String body_size = "[" + txNeck.getText() + "]"
-								 	+ "[" + txChest.getText() + "]"
-								 	+ "[" + txBoobs.getText() + "]"
-								 	+ "[" + txBelly.getText() + "]"
-								 	+ "[" + txAss.getText() + "]"
-								 	+ "[" + txHeigh.getText() + "]";
-					com.Send_Command_String(Common.COMMAND.CMD_SET_POSITION, body_size);	
-				}	
+					com.Send_Command_No_Data(Common.COMMAND.CMD_REBOOT);
 			}
 		});
-		
-		btnGetSize = new JButton("Get");
-		btnGetSize.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				if (com != null)
-					com.Send_Command_No_Data(Common.COMMAND.CMD_GET_POSITION);
-			}
-		});
-		
-		JLabel lblMm = new JLabel("Unit: mm");
-		lblMm.setHorizontalAlignment(SwingConstants.CENTER);
-		
-		
-		
 		GroupLayout gl_BodyGroup = new GroupLayout(BodyGroup);
 		gl_BodyGroup.setHorizontalGroup(
 			gl_BodyGroup.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_BodyGroup.createSequentialGroup()
-					.addContainerGap()
+					.addGap(10)
 					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
+						.addComponent(lblNeck)
+						.addComponent(txNeck, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(lblChest, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txChest, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(lbBust, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txBoobs, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(lbWaist, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txBelly, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(lblHip, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
+						.addComponent(txAss, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
 						.addComponent(lblHeight, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addComponent(lblHip, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-							.addGap(210))
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addComponent(lbWaist, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-							.addGap(210))
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addComponent(lbBust, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-							.addGap(210))
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addComponent(lblChest, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)
-							.addGap(210))
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addComponent(lblNeck)
-							.addGap(233))
-						.addGroup(gl_BodyGroup.createSequentialGroup()
-							.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING, false)
-								.addComponent(lblMm, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-								.addComponent(txNeck, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-								.addComponent(txChest, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-								.addComponent(txBoobs, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-								.addComponent(txBelly, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-								.addComponent(txAss, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-								.addComponent(txHeigh, GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE))
-							.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
-								.addGroup(gl_BodyGroup.createSequentialGroup()
-									.addPreferredGap(ComponentPlacement.UNRELATED)
-									.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
-										.addComponent(de_neck)
-										.addComponent(de_chest)
-										.addComponent(de_bust)
-										.addComponent(de_waist)
-										.addComponent(de_hip)
-										.addComponent(de_heigh))
-									.addPreferredGap(ComponentPlacement.UNRELATED)
-									.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
-										.addGroup(gl_BodyGroup.createSequentialGroup()
-											.addComponent(add_heigh)
-											.addPreferredGap(ComponentPlacement.RELATED, 72, Short.MAX_VALUE)
-											.addComponent(btnSetSize, GroupLayout.PREFERRED_SIZE, 62, GroupLayout.PREFERRED_SIZE))
-										.addComponent(add_neck)
-										.addComponent(add_chest)
-										.addComponent(add_bust)
-										.addComponent(add_waist)
-										.addComponent(add_hip)))
-								.addGroup(Alignment.TRAILING, gl_BodyGroup.createSequentialGroup()
-									.addGap(124)
-									.addComponent(btnGetSize, GroupLayout.PREFERRED_SIZE, 62, GroupLayout.PREFERRED_SIZE)))
-							.addContainerGap())))
+						.addComponent(txHeigh, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(lblMm, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE))
+					.addGap(10)
+					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
+						.addComponent(de_neck)
+						.addComponent(de_chest)
+						.addComponent(de_bust)
+						.addComponent(de_waist)
+						.addComponent(de_hip)
+						.addComponent(de_heigh))
+					.addGap(10)
+					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
+						.addComponent(add_neck)
+						.addComponent(add_chest)
+						.addComponent(add_bust)
+						.addComponent(add_waist)
+						.addComponent(add_hip)
+						.addComponent(add_heigh))
+					.addGap(44)
+					.addComponent(separator_2, GroupLayout.PREFERRED_SIZE, 4, GroupLayout.PREFERRED_SIZE)
+					.addGap(18)
+					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
+						.addComponent(btnGetSize, GroupLayout.PREFERRED_SIZE, 53, GroupLayout.PREFERRED_SIZE)
+						.addComponent(btnSetSize, GroupLayout.PREFERRED_SIZE, 53, GroupLayout.PREFERRED_SIZE)
+						.addComponent(cbxReset, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE)
+						.addComponent(btnReboot)))
 		);
 		gl_BodyGroup.setVerticalGroup(
-			gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-				.addGroup(Alignment.LEADING, gl_BodyGroup.createSequentialGroup()
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addComponent(add_neck)
-						.addComponent(de_neck)
+			gl_BodyGroup.createParallelGroup(Alignment.LEADING)
+				.addGroup(gl_BodyGroup.createSequentialGroup()
+					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.LEADING)
 						.addGroup(gl_BodyGroup.createSequentialGroup()
 							.addComponent(lblNeck)
 							.addGap(3)
-							.addComponent(txNeck, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addComponent(txNeck, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
 							.addComponent(lblChest)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-								.addComponent(add_chest)
-								.addComponent(txChest, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-						.addComponent(de_chest))
-					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(6)
+							.addComponent(txChest, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
 							.addComponent(lbBust)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-								.addComponent(add_bust)
-								.addComponent(txBoobs, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-						.addComponent(de_bust))
-					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(6)
+							.addComponent(txBoobs, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
 							.addComponent(lbWaist)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(txBelly, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-						.addComponent(de_waist)
-						.addComponent(add_waist))
-					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(6)
+							.addComponent(txBelly, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
 							.addComponent(lblHip)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(txAss, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-						.addComponent(de_hip)
-						.addComponent(add_hip))
-					.addGap(18)
-					.addGroup(gl_BodyGroup.createParallelGroup(Alignment.TRAILING)
-						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(6)
+							.addComponent(txAss, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
 							.addComponent(lblHeight)
-							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(txHeigh, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-						.addComponent(de_heigh)
-						.addComponent(add_heigh))
-					.addGap(18)
-					.addComponent(lblMm)
-					.addContainerGap(14, Short.MAX_VALUE))
-				.addGroup(gl_BodyGroup.createSequentialGroup()
-					.addContainerGap(316, Short.MAX_VALUE)
-					.addComponent(btnSetSize)
-					.addPreferredGap(ComponentPlacement.UNRELATED)
-					.addComponent(btnGetSize)
-					.addContainerGap())
+							.addGap(6)
+							.addComponent(txHeigh, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
+							.addComponent(lblMm))
+						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(21)
+							.addComponent(de_neck)
+							.addGap(42)
+							.addComponent(de_chest)
+							.addGap(42)
+							.addComponent(de_bust)
+							.addGap(42)
+							.addComponent(de_waist)
+							.addGap(42)
+							.addComponent(de_hip)
+							.addGap(42)
+							.addComponent(de_heigh))
+						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(21)
+							.addComponent(add_neck)
+							.addGap(42)
+							.addComponent(add_chest)
+							.addGap(42)
+							.addComponent(add_bust)
+							.addGap(42)
+							.addComponent(add_waist)
+							.addGap(42)
+							.addComponent(add_hip)
+							.addGap(42)
+							.addComponent(add_heigh))
+						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(11)
+							.addComponent(separator_2, GroupLayout.PREFERRED_SIZE, 360, GroupLayout.PREFERRED_SIZE))
+						.addGroup(gl_BodyGroup.createSequentialGroup()
+							.addGap(195)
+							.addComponent(cbxReset, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE)
+							.addGap(18)
+							.addComponent(btnSetSize)
+							.addGap(18)
+							.addComponent(btnGetSize)
+							.addGap(18)
+							.addComponent(btnReboot)))
+					.addGap(8))
 		);
 		BodyGroup.setLayout(gl_BodyGroup);
-		
-		JPanel ConnectionGroup = new JPanel();
-		ConnectionGroup.setBounds(25, 11, 290, 87);
-		frame.getContentPane().add(ConnectionGroup);
-		ConnectionGroup.setBorder(BorderFactory.createTitledBorder("Connection Properties"));
-		
-		JLabel lblIp = new JLabel("IP:");
-		
-		txAddress = new JTextField();
-		txAddress.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent arg0) {
-				if (!validateIP(txAddress.getText()))
-				{
-					infoBox("Please input the valid IP Address format", "Invalid IP Address");
-					txAddress.requestFocus();
-				}
-			}
-		});
-		lblIp.setLabelFor(txAddress);
-		txAddress.setText("192.168.1.4");
-		txAddress.setColumns(10);
-		
-		JButton btnConnect = new JButton("Connect");
-		btnConnect.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				//tcpClient = new SocketClient (window, txAddress.getText(), 4321);
-				if (btnConnect.getText() == "Connect")
-				{
-					com = new Communication(Common.TYPECONNECT.HDR_WIFI);
-					if (com.Connect(window, txAddress.getText(), Integer.parseInt(txPort.getText())))
-						{
-							com.Send_Command_No_Data(Common.COMMAND.CMD_CONNECTION_REQUEST);
-							btnConnect.setText("Disconnect");
-						}
-					else
-						infoBox("Cannot connect", "Socket Error");
-				}
-				else
-				{
-					com.Send_Command_No_Data(Common.COMMAND.CMD_DISCONNECT);
-					com.Close();
-					com = null;
-					btnConnect.setText("Connect");
-				}
-			}
-		});
-		
-		JLabel lblPort = new JLabel("Port:");
-		
-		txPort = new JFormattedTextField(formatter);
-		lblPort.setLabelFor(txPort);
-		txPort.setText("5000");
-		txPort.setColumns(10);
 		GroupLayout gl_ConnectionGroup = new GroupLayout(ConnectionGroup);
 		gl_ConnectionGroup.setHorizontalGroup(
 			gl_ConnectionGroup.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_ConnectionGroup.createSequentialGroup()
-					.addContainerGap()
+					.addGap(10)
 					.addGroup(gl_ConnectionGroup.createParallelGroup(Alignment.LEADING)
 						.addComponent(lblIp)
 						.addComponent(lblPort))
@@ -480,74 +601,47 @@ public class Manequinn_gui implements StringReceiver {
 					.addGroup(gl_ConnectionGroup.createParallelGroup(Alignment.LEADING)
 						.addComponent(txAddress, GroupLayout.PREFERRED_SIZE, 97, GroupLayout.PREFERRED_SIZE)
 						.addComponent(txPort, GroupLayout.PREFERRED_SIZE, 77, GroupLayout.PREFERRED_SIZE))
-					.addPreferredGap(ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-					.addComponent(btnConnect)
-					.addContainerGap())
+					.addGap(46)
+					.addComponent(btnConnect))
 		);
 		gl_ConnectionGroup.setVerticalGroup(
 			gl_ConnectionGroup.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_ConnectionGroup.createSequentialGroup()
-					.addGroup(gl_ConnectionGroup.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_ConnectionGroup.createSequentialGroup()
-							.addGap(5)
-							.addGroup(gl_ConnectionGroup.createParallelGroup(Alignment.BASELINE)
-								.addComponent(lblIp)
-								.addComponent(txAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-							.addPreferredGap(ComponentPlacement.UNRELATED)
-							.addGroup(gl_ConnectionGroup.createParallelGroup(Alignment.BASELINE)
-								.addComponent(lblPort)
-								.addComponent(txPort, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)))
-						.addGroup(gl_ConnectionGroup.createSequentialGroup()
-							.addContainerGap()
-							.addComponent(btnConnect, GroupLayout.PREFERRED_SIZE, 31, GroupLayout.PREFERRED_SIZE)))
-					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+					.addGap(8)
+					.addComponent(lblIp)
+					.addGap(17)
+					.addComponent(lblPort))
+				.addGroup(gl_ConnectionGroup.createSequentialGroup()
+					.addGap(5)
+					.addComponent(txAddress, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+					.addGap(11)
+					.addComponent(txPort, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+				.addGroup(gl_ConnectionGroup.createSequentialGroup()
+					.addGap(11)
+					.addComponent(btnConnect, GroupLayout.PREFERRED_SIZE, 31, GroupLayout.PREFERRED_SIZE))
 		);
 		ConnectionGroup.setLayout(gl_ConnectionGroup);
+		panel.setLayout(gl_panel);
 		
-		JLabel lblStatus = new JLabel("Status:");
-		lblStatus.setBounds(10, 541, 46, 14);
-		frame.getContentPane().add(lblStatus);
+		//tabbedPane.addTab("Main Page", cover);
 		
-		txReceive = new JLabel("Idle");
-		txReceive.setHorizontalAlignment(SwingConstants.LEFT);
-		lblStatus.setLabelFor(txReceive);
-		txReceive.setBounds(94, 541, 221, 14);
-		frame.getContentPane().add(txReceive);
-
-		Image img1 = new ImageIcon(this.getClass().getResource("/body-front.png")).getImage();
-		Image img2 = new ImageIcon(this.getClass().getResource("/body-side.png")).getImage();
-		Image img_cover = new ImageIcon(this.getClass().getResource("/seldat_icon.png")).getImage();
-		JSeparator separator = new JSeparator();
-		separator.setOrientation(SwingConstants.VERTICAL);
-		separator.setBounds(439, 145, 4, 360);
-		frame.getContentPane().add(separator);
+		JMenuBar menuBar = new JMenuBar();
+		frame.setJMenuBar(menuBar);
 		
-		JLabel front_img = new JLabel("");
-		front_img.setIcon(new ImageIcon(img1));
-		front_img.setBounds(453, 145, 258, 360);
-		frame.getContentPane().add(front_img);
+		JMenu mnFile = new JMenu("File");
+		menuBar.add(mnFile);
 		
-		JSeparator separator_1 = new JSeparator();
-		separator_1.setOrientation(SwingConstants.VERTICAL);
-		separator_1.setBounds(721, 152, 2, 347);
-		frame.getContentPane().add(separator_1);
+		JMenu mnProfile = new JMenu("Profile");
+		mnFile.add(mnProfile);
 		
-		JLabel side_img = new JLabel("");
-		side_img.setIcon(new ImageIcon(img2));
-		side_img.setBounds(733, 145, 140, 360);
-		frame.getContentPane().add(side_img);
+		JMenuItem mntmSave = new JMenuItem("Save");
+		mnProfile.add(mntmSave);
 		
-		JLabel cover = new JLabel("");
-		cover.setBounds(459, 11, 425, 80);
-		cover.setIcon(new ImageIcon(img_cover));
-		frame.getContentPane().add(cover);
+		JMenuItem mntmLoad = new JMenuItem("Load");
+		mnProfile.add(mntmLoad);
 		
-		list_body_parts.add(txNeck);
-		list_body_parts.add(txChest);
-		list_body_parts.add(txBoobs);
-		list_body_parts.add(txBelly);
-		list_body_parts.add(txAss);
-		list_body_parts.add(txHeigh);
+		JMenu mnAbout = new JMenu("About");
+		menuBar.add(mnAbout);
 		/*
 		 * 
 		 */
@@ -577,15 +671,15 @@ public class Manequinn_gui implements StringReceiver {
 	  
 	Timer timer = new Timer(delay, taskPerformer);
 	
-	public void updateRecv(String data, int type){
+	public void updateRecv(String data, Common.COMMAND type){
 		SwingUtilities.invokeLater(new Runnable() {
 		    public void run() {
-		      if (type == 1)
+		      if (type == Common.COMMAND.CMD_SET_POSITION)
 		      {
 		    	  txReceive.setText(data);
 		    	  timer.start();
 		      }
-		      else if(type == 0)
+		      else if(type == Common.COMMAND.CMD_GET_POSITION)
 		      {
 		    	  String[] body_part = data.split("\\[");
 		      	  /*for (int ix = 0; ix < body_part.length; ix++){
@@ -602,10 +696,61 @@ public class Manequinn_gui implements StringReceiver {
 		    	  timer.start();
 		    	  
 		      }
+		      else if (type == Common.COMMAND.CMD_CONNECTION_REQUEST)
+		      {
+		    	  Connect_View(true);
+		    	  txReceive.setText(data);
+		    	  timer.start();
+		      }
+		      else if (type == Common.COMMAND.CMD_DISCONNECT)
+		      {
+		    	  if (data == "Disconnected") {
+		    		  com.Close();
+		    		  com = null;
+		    		  Connect_View(false);
+		    		  txReceive.setText(data);
+			    	  timer.start();
+		    	  }
+		    	  else if (data == "Close") {
+		    		  txReceive.setText("Disconnected");
+			    	  timer.start();
+		    		  if(com != null){
+		        		  com = null;
+		        	  }
+		    		  Connect_View(false);
+		    	  }
+		    	  else {
+		    		  txReceive.setText(data);
+			    	  timer.start();
+		    	  }
+		      }
 		      else
 		    	  infoBox("Not support. Please check action", "Type Message Receive");
 		    }
 		  });
+	}
+
+	private void Reset_Component()
+	{
+		txNeck.setText("0");
+		txChest.setText("0");
+		txBoobs.setText("0");
+		txBelly.setText("0");
+		txAss.setText("0");
+		txHeigh.setText("0");
+	}
+	
+	private void Connect_View (boolean connected)
+	{
+		if (connected)
+		{
+			btnConnect.setText("Disconnect");
+		}
+		else
+		{
+			btnConnect.setText("Connect");
+			Reset_Component();
+		}
 	}
 	
 	public static void Incr_Text (JFormattedTextField txbox)
@@ -624,7 +769,7 @@ public class Manequinn_gui implements StringReceiver {
     }
 
 	@Override
-	public void passMsg(String msg, int set_type) {
+	public void passMsg(String msg, Common.COMMAND set_type) {
 			updateRecv(msg, set_type);
 			
 	}
