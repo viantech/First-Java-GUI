@@ -103,6 +103,10 @@ public class Manequinn_gui implements StringReceiver {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		int arr[] = null;
+		if (arr == null) {
+		  System.out.println("array is null");
+		}
 		list_body_parts = new ArrayList<JFormattedTextField>();
 		Image img_ico = new ImageIcon(this.getClass().getResource("/Icon_SD.png")).getImage();
 		frame = new JFrame();
@@ -445,6 +449,7 @@ public class Manequinn_gui implements StringReceiver {
 				list_body_parts.add(txBelly);
 				list_body_parts.add(txAss);
 				list_body_parts.add(txHeigh);
+				list_body_parts.clear();
 		
 		JPanel panel_1 = new JPanel();
 		panel_1.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Simulate", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));
@@ -787,15 +792,15 @@ public class Manequinn_gui implements StringReceiver {
 		}
 	}
 	
-	public static void Incr_Text (JFormattedTextField txbox){
+	public static void Incr_Text (JFormattedTextField txbox) {
 		txbox.setText(Integer.toString(Integer.parseInt(txbox.getText()) + 1)); 
 	}
 	
-	public static void Sub_Text (JFormattedTextField txbox){
+	public static void Sub_Text (JFormattedTextField txbox) {
 		txbox.setText(Integer.toString(Integer.parseInt(txbox.getText()) - 1)); 
 	}
 	
-	public static void infoBox(String infoMessage, String titleBar){
+	public static void infoBox(String infoMessage, String titleBar) {
         JOptionPane.showMessageDialog(null, infoMessage, titleBar, JOptionPane.INFORMATION_MESSAGE);
     }
 

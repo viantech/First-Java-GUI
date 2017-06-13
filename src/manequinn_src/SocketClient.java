@@ -3,7 +3,9 @@ package manequinn_src;
 import java.io.*;
 import java.net.*;
 import java.util.Arrays;
+import java.util.List;
 
+import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 
 
@@ -20,6 +22,8 @@ public class SocketClient {
 	private ReceivedStream runnableHandler = null;
 	private int port;
 	private volatile Boolean connect_ok = false;
+	//private List<Byte> join_command_bytes;
+	private byte[] joined_bytes;
 	//private static BufferedReader in;
 
 	public SocketClient() {
@@ -30,6 +34,7 @@ public class SocketClient {
 		this.ipAddr = ipServer;
 		this.port = port;
 		this.pview = view;
+		joined_bytes = new byte[0];
 	}
 
 	public boolean Connect() {
@@ -116,11 +121,26 @@ public class SocketClient {
 					    
 					    if ((redData[red - 2] + (redData[red - 3] << 8)) == 1){
 					    	if  (Common.Decode_SubFrame(redData) != (byte)0){
-					    		byte[] meta_sub_frame = new byte[red - 6];
-					    		System.arraycopy(redData, 3, meta_sub_frame, 0, red - 6);
-					    		Data_Receive_Handler(meta_sub_frame);
+					    		if ((joined_bytes != null) || (joined_bytes.length > 0)){
+					    			joined_bytes = new byte[joined_bytes.length + red - 6];
+						    		System.arraycopy(redData, 3, joined_bytes.length - red + 6, 0, red - 6);
+						    		Data_Receive_Handler(joined_bytes);
+						    		joined_bytes = new byte[0];
+					    		}
+					    		else{
+						    		byte[] meta_sub_frame = new byte[red - 6];
+						    		System.arraycopy(redData, 3, meta_sub_frame, 0, red - 6);
+						    		Data_Receive_Handler(meta_sub_frame);
+					    		}
 					    	}
 					    }
+					    else{
+					    	if  (Common.Decode_SubFrame(redData) != (byte)0){
+					    		joined_bytes = new byte[joined_bytes.length + red - 6];
+					    		System.arraycopy(redData, 3, joined_bytes.length - red + 6, 0, red - 6);
+					    	}
+					    }
+					  
 					}
 					else{
 						this.client.getOutputStream().close();
