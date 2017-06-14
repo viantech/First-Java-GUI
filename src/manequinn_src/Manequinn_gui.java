@@ -75,7 +75,7 @@ public class Manequinn_gui implements StringReceiver {
 	private JButton btnConnect;
 	//SocketClient tcpClient;
 	private Communication com;
-	private List<JFormattedTextField> list_body_parts;
+	//private List<JFormattedTextField> list_body_parts;
 	/**
 	 * Launch the application.
 	 */
@@ -103,11 +103,8 @@ public class Manequinn_gui implements StringReceiver {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		int arr[] = null;
-		if (arr == null) {
-		  System.out.println("array is null");
-		}
-		list_body_parts = new ArrayList<JFormattedTextField>();
+		
+		//list_body_parts = new ArrayList<JFormattedTextField>();
 		Image img_ico = new ImageIcon(this.getClass().getResource("/Icon_SD.png")).getImage();
 		frame = new JFrame();
 		frame.setBounds(100, 100, 950, 640);
@@ -443,13 +440,13 @@ public class Manequinn_gui implements StringReceiver {
 					}
 				});
 				
-				list_body_parts.add(txNeck);
+				/*list_body_parts.add(txNeck);
 				list_body_parts.add(txChest);
 				list_body_parts.add(txBoobs);
 				list_body_parts.add(txBelly);
 				list_body_parts.add(txAss);
 				list_body_parts.add(txHeigh);
-				list_body_parts.clear();
+				list_body_parts.clear();*/
 		
 		JPanel panel_1 = new JPanel();
 		panel_1.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Simulate", TitledBorder.LEADING, TitledBorder.TOP, null, new Color(0, 0, 0)));

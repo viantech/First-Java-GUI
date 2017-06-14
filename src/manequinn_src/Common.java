@@ -181,31 +181,29 @@ public class Common {
     /*
      * Check validate read byte data
      */
-    public static byte Decode_SubFrame(byte[] byte_data)
+    public static byte Check_SubFrame(byte[] byte_data, int sub_len)
     {
     	//SubFrameFormat sub_fmt = new SubFrameFormat(HEADER.RESP_PACKET_HDR.getValue(), (short)(byte_data.length - 1), (short)1);
         //int datalen_fmt;
-        if (byte_data == null || byte_data.length == 0)
-            return 0;
+        //if (byte_data == null || byte_data.length == 0)
+            //return 0;
         /* Frame Format*/
         //Command
-        if (HEADER.RESP_PACKET_HDR.getValue() != byte_data[0])
-            return 0;
+        //if (HEADER.RESP_PACKET_HDR.getValue() != byte_data[0])
+            //return 0;
 
         //Length
-        int sub_len = byte_data.length - 1;
+        //int sub_len = byte_data.length - 1;
         //fmt.length = (short)(byte_data[2] + (byte_data[1] << 8));
-        if (sub_len != (short)(byte_data[2] + (byte_data[1] << 8)))
-            return 0;
+        //if (sub_len != (short)(byte_data[2] + (byte_data[1] << 8)))
+            //return 0;
         
         //CRC
         //sub_fmt.Check_Sum(byte_data[sub_fmt.length]);
         if (byte_data[sub_len] != Chcksum(Arrays.copyOfRange(byte_data, 1, sub_len), sub_len - 1))
             return 0;
-
-        /* Data Frame Format*/
-        //sub_fmt.Meta_Data(byte_data);
-        return 1;
+        else
+        	return 1;
     }
     
     /*
