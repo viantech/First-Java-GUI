@@ -107,15 +107,13 @@ public class SocketClient {
 			int length;
 			int bytesRed = -1;
 			byte[] buffer = new byte[1024];
-			byte[] redData;
+			//byte[] redData;
 			Thread thisThread = Thread.currentThread();
 			
 			while (blinker == thisThread){
 				try{
-					if (this.inStream.read(buffer,0, 1) > 0){
-						synchronized(this){
-							notifyAll();
-						}
+					if (this.inStream.read(buffer, 0, 1) > 0){
+						
 						if (buffer[0] == Common.HEADER.RESP_PACKET_HDR.getValue()){
 							if (this.inStream.read(buffer, 1, 2)> 0){
 								length = (buffer[1] << 8) + buffer[2];
@@ -129,28 +127,31 @@ public class SocketClient {
                                         break;
                                 }
                                 length ++;
-                                redData = new byte[length];
-        					    System.arraycopy(buffer, 0, redData, 0, length);
+                                synchronized(this){
+        							notifyAll();
+        						}
+                                //redData = new byte[length];
+        					    //System.arraycopy(buffer, 0, redData, 0, length);
         					    
-        					    if ((redData[length - 2] + (redData[length - 3] << 8)) == 1){
-        					    	if  (Common.Check_SubFrame(redData, length - 1) != (byte)0){
-        					    		if ((joined_bytes != null) || (joined_bytes.length > 0)){
+        					    if ((buffer[length - 2] + (buffer[length - 3] << 8)) == 1){
+        					    	if  (Common.Check_SubFrame(buffer, length - 1) != (byte)0){
+        					    		if (joined_bytes.length > 0){
         					    			joined_bytes = new byte[joined_bytes.length + length - 6];
-        						    		System.arraycopy(redData, 3, joined_bytes, joined_bytes.length - length + 6, length - 6);
+        						    		System.arraycopy(buffer, 3, joined_bytes, joined_bytes.length - length + 6, length - 6);
         						    		Data_Receive_Handler(joined_bytes);
         						    		joined_bytes = new byte[0];
         					    		}
         					    		else{
         						    		byte[] meta_sub_frame = new byte[length - 6];
-        						    		System.arraycopy(redData, 3, meta_sub_frame, 0, length - 6);
+        						    		System.arraycopy(buffer, 3, meta_sub_frame, 0, length - 6);
         						    		Data_Receive_Handler(meta_sub_frame);
         					    		}
         					    	}
         					    }
         					    else{
-        					    	if  (Common.Check_SubFrame(redData, length - 1) != (byte)0){
+        					    	if  (Common.Check_SubFrame(buffer, length - 1) != (byte)0){
         					    		joined_bytes = new byte[joined_bytes.length + length - 6];
-        					    		System.arraycopy(redData, 3, joined_bytes, joined_bytes.length - length + 6, length - 6);
+        					    		System.arraycopy(buffer, 3, joined_bytes, joined_bytes.length - length + 6, length - 6);
         					    	}
         					    }
 							}

@@ -103,7 +103,12 @@ public class Manequinn_gui implements StringReceiver {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		
+		/*int arr[] = new int[10];
+		//arr = new int[0];
+		if (arr.length > 0)
+			System.out.print("array ok");
+		else
+			System.out.print("array sassdas");*/
 		//list_body_parts = new ArrayList<JFormattedTextField>();
 		Image img_ico = new ImageIcon(this.getClass().getResource("/Icon_SD.png")).getImage();
 		frame = new JFrame();
