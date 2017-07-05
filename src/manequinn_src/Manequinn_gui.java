@@ -122,7 +122,7 @@ public class Manequinn_gui implements StringReceiver {
 		Image img_ico = new ImageIcon(this.getClass().getResource("/Icon_SD.png")).getImage();
 		frame = new JFrame();
 		frame.setBounds(100, 100, 1100, 674);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		//frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		frame.setIconImage(img_ico);
 		frame.setTitle("Seldat Robot Manequinn");
